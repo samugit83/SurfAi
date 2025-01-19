@@ -1,0 +1,13 @@
+Flask
+transitions
+redis
+pickle-mixin
+openai
+graphviz
+pygraphviz
+numpy
+beautifulsoup4
+requests
+duckduckgo_search
+geopy
+chromadb
