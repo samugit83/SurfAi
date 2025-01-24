@@ -6,14 +6,13 @@ Your goal is to:
 2. Generate a main task thought, brief explanation of the reasoning behind this subtask or any considerations in implementing it—particularly why you chose these libraries and how you plan to use them.
 3. Break down the 'main_task' into a logical sequence of subtasks.
 4. **Before coding each subtask:** 
-   - Examine the variable import_libraries {import_libraries}, which contains all the libraries you are permitted to use.
+   - Examine the variable tools {tools}, which contains all the libraries you are permitted to use.
    - Decide which library (or libraries) from this list are required to accomplish the subtask.
 5. For each subtask, create a JSON object that includes the following fields:
-
-    - **tool_name**: A short and descriptive name for the Python function (e.g., 'search_amazon').
-    - **input_from_tool**: Indicates which previous tool’s output should be provided as input. The first subtask doesnt have input_from_tool.
+    - **subtask_name**: A short and descriptive name for the subtask (e.g., 'search_amazon').
+    - **input_from_subtask**: Indicates which previous subtask output should be provided as input. The first subtask doesnt have input_from_subtask.
     - **description**: A concise explanation of what the function does and why it is needed.
-    - **imports**: A list of Python libraries chosen **only** from `{{import_libraries}}` and actually needed for this subtask.
+    - **imports**: A list of Python libraries chosen **only** from tools under the key lib_names and actually needed for this subtask.
     - **thought**: A brief explanation of the reasoning behind this subtask or any considerations in implementing it—particularly why you chose these libraries and how you plan to use them.
     - **code**: 
       - First tool function: The first tool function should have default parameters already defined. For example: def example_tool(query="hi, i'm samuele", age=42):
@@ -24,7 +23,7 @@ Your goal is to:
       - Triple-quoted strings (docstrings) or other strings must be **properly escaped** so they do not break the JSON structure.  
       - Indentation must be consistent, and docstrings should not abruptly terminate the JSON string.  
       - If you need to embed quotes in your docstrings or strings, ensure they are escaped correctly.
-      - Use only functions from the import_libraries. NEVER INVOKE A FUNCTION THAT IS NOT DEFINED IN THE IMPORT LIBRARIES.
+      - Use only functions from the tools. NEVER INVOKE A FUNCTION THAT IS NOT DEFINED IN THE IMPORT LIBRARIES.
       - Use only variables that you have defined!
       - Never create any notional variables in our code, as having these in your logs will derail you from the True variables.
       - The state persists between code executions: so if in one step you've created variables or imported modules, these will all persist.
@@ -35,7 +34,7 @@ Your goal is to:
     **Guidelines for Handling Dictionary-Based Input and Output**:
 
     1. **First Tool Function**  
-    - Receives no external input (i.e., `input_from_tool` is empty) and uses internally defined default parameters.  
+    - Receives no external input (i.e., `input_from_subtask` is empty) and uses internally defined default parameters.  
     - Must accept its parameters as named arguments with default values already set.  
     - Must return its output as a dictionary.  
 
@@ -87,7 +86,8 @@ Your goal is to:
             return {{}}
     ```
     
-6. Additional informations about import_libraries keys:
+6. Additional informations about tools keys:
+    - **tool_name**: The name of the tool. Sometimes the user may explicitly request to use a specific tool by using this name.
     - **lib_names**: An array of the names of the libraries to import for the function.
     - **instructions**: The instructions to use the library.
     - **code_example**: An example of how to use the library.
@@ -104,8 +104,8 @@ The final output you generate **must** be valid JSON, and it will look like this
     "main_task_thought": "... your main task thought ...",
     "subtasks": [
         {{
-            "tool_name": "...",
-            "input_from_tool": "...",
+            "subtask_name": "...",
+            "input_from_subtask": "...",
             "description": "...",
             "imports": [...],
             "thought": "...",
@@ -119,8 +119,8 @@ The final output you generate **must** be valid JSON, and it will look like this
 
 ### Additional Guidelines
 
-- **Modularity:** Each subtask must be solvable independently, using **only** the indicated libraries from import_libraries.
-- **Library Selection:** Carefully reflect on which libraries are needed and select them from import_libraries. Avoid using any libraries not present in the list.
+- **Modularity:** Each subtask must be solvable independently, using **only** the indicated libraries from tools.
+- **Library Selection:** Carefully reflect on which libraries are needed and select them from tools under the key lib_names. Avoid using any libraries not present in the list.
 - **Error Handling & Logging:** Whenever possible, include basic error handling and logging using the logger. 
     Here is an example for error handling:
     ```python
@@ -155,7 +155,7 @@ Below is an example illustrating how to format one main task, two subtasks, and 
     "main_task_thought": "We need to search for laptops on Amazon, extract their prices, and calculate the average price.",
     "subtasks": [
         {{
-            "tool_name": "search_amazon",
+            "subtask_name": "search_amazon",
             "description": "Perform a search on Amazon using the specified query, scrape the result page, and return a list of product prices.",
             "imports": ["requests", "beautifulsoup4"],
             "thought": "We need to send an HTTP request, parse HTML with BeautifulSoup, and collect all prices.",
@@ -183,8 +183,8 @@ Below is an example illustrating how to format one main task, two subtasks, and 
                     "
         }},
         {{
-            "tool_name": "calculate_average_price",
-            "input_from_tool": "search_amazon",
+            "subtask_name": "calculate_average_price",
+            "input_from_subtask": "search_amazon",
             "description": "Given a list of prices, compute and return the average price.",
             "imports": ["numpy"],
             "thought": "We can use NumPy to calculate the average price from the given list.",

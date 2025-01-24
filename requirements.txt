@@ -11,3 +11,6 @@ requests
 duckduckgo_search
 geopy
 chromadb
+spacy
+neo4j
+PyPDF2

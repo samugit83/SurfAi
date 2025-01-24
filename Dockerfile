@@ -21,6 +21,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download SpaCy model
+RUN python -m spacy download en_core_web_sm
+
 # Copy the rest of your project
 COPY . .
 
@@ -29,3 +32,4 @@ EXPOSE 5000
 
 # Run the application
 CMD ["python", "app.py"]
+

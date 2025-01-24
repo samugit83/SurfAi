@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 from typing import List, Dict
 from .prompts import (
     CODE_SYSTEM_PROMPT, 
@@ -7,7 +8,7 @@ from .prompts import (
 )
 from .utils import sanitize_gpt_response
 from models.models import call_model
-from .prompts import DEFAULT_TOOLS
+from .default_tools import generate_default_tools
 
 class MemoryLogHandler(logging.Handler):
     def __init__(self, memory_logs: List[str], *args, **kwargs):
@@ -19,14 +20,19 @@ class MemoryLogHandler(logging.Handler):
         self.memory_logs.append(log_entry)
 
 class CodeAgent:
-    def __init__(self, chat_history: List[Dict], import_libraries: List[str]):
+    def __init__(self, chat_history: List[Dict], tools: List[str]):
         logging.basicConfig(level=logging.DEBUG)  
         self.chat_history = chat_history
-        self.import_libraries = import_libraries
+        self.tools = tools
         self.memory_logs = []  # Initialize the logs list
         self.logger = logging.getLogger(__name__)
         self.json_plan = None
-        self.logger.setLevel(logging.DEBUG)
+        self.models = {
+            "TOOL_HELPER_MODEL": os.getenv("TOOL_HELPER_MODEL"), 
+            "JSON_PLAN_MODEL": os.getenv("JSON_PLAN_MODEL"),
+            "EVALUATION_MODEL": os.getenv("EVALUATION_MODEL"),
+            "SIMPLE_RAG_EMBEDDING_MODEL": os.getenv("SIMPLE_RAG_EMBEDDING_MODEL")
+        }
 
         memory_handler = MemoryLogHandler(self.memory_logs)
         memory_handler.setLevel(logging.DEBUG)
@@ -35,18 +41,19 @@ class CodeAgent:
         self.logger.addHandler(memory_handler)
 
     def run_agent(self):
+        tools = generate_default_tools()
         try:
             self.logger.info(f"\n\n\n\n\n\n🟢 Starting agent with main task: {self.chat_history}")
-            self.import_libraries = self.import_libraries + DEFAULT_TOOLS
+            self.tools = self.tools + tools
 
             agent_prompt = CODE_SYSTEM_PROMPT.format(
                 conversation_history=self.chat_history,
-                import_libraries=self.import_libraries
+                tools=self.tools
             )
 
             agent_output_str = call_model(
                 chat_history=[{"role": "user", "content": agent_prompt}],
-                model="gpt-4o"
+                model=self.models["JSON_PLAN_MODEL"]
             )
 
             agent_output_str = sanitize_gpt_response(agent_output_str)
@@ -72,12 +79,12 @@ class CodeAgent:
                     # Execute the code string which now uses logger for output
                     exec(code_string, temp_namespace)
                     
-                    tool_name = subtask["tool_name"]
-                    input_tool_name = subtask.get("input_from_tool", "")
+                    subtask_name = subtask["subtask_name"]
+                    input_tool_name = subtask.get("input_from_subtask", "")
 
                     # If the tool exists in the temp_namespace, proceed
-                    if tool_name in temp_namespace:
-                        tool_func = temp_namespace[tool_name]
+                    if subtask_name in temp_namespace:
+                        tool_func = temp_namespace[subtask_name]
 
                         # Determine input if specified
                         if input_tool_name:
@@ -86,8 +93,8 @@ class CodeAgent:
                         else:
                             result = tool_func()
 
-                        results[tool_name] = result
-                        self.logger.info(f"\n\n🟣 Output from '{tool_name}': {result}")
+                        results[subtask_name] = result
+                        self.logger.info(f"\n\n🟣 Output from '{subtask_name}': {result}")
 
                 print(f"\n🟠 Memory logs at iteration {iteration}: {self.memory_logs}")
 
@@ -101,7 +108,7 @@ class CodeAgent:
 
                 evaluation_output_str = call_model(
                     chat_history=[{"role": "user", "content": evaluation_prompt}],
-                    model="gpt-4o"
+                    model=self.models["EVALUATION_MODEL"]
                 )
 
                 evaluation_output_str = sanitize_gpt_response(evaluation_output_str)

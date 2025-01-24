@@ -1,12 +1,10 @@
 
 from flask import Flask, request, jsonify, render_template
 import os
-from state_machine import run_machine
-from session_manager import SessionManager
-from interactive_multiagent.planner import AgentPlanner
 from code_agent.code_agent import CodeAgent
 import logging
 import traceback
+from rag.hybrid_vector_graph_rag.ingest_corpus import ingest_corpus
 
 logging.basicConfig(
     level=logging.INFO,  # Change to DEBUG for more verbosity
@@ -15,21 +13,11 @@ logging.basicConfig(
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY environment variable is not set")
-
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB", 0))
-
-session_manager = SessionManager(redis_host=REDIS_HOST, redis_port=REDIS_PORT, db=REDIS_DB)
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
+    
 @app.route('/run-code-agent', methods=['POST'])
 def run_code_agent():
     try:
@@ -40,11 +28,13 @@ def run_code_agent():
         # Extract necessary fields for initializing CodeAgent
         chat_history = data.get('session_chat_history', [])
 
-        import_libraries = [
+        tools = [
             {
+                "tool_name": "numpy",
                 "lib_name": ["numpy"]
             },
-            {
+            {   
+                "tool_name": "geopy",
                 "lib_name": ["geopy"],
                 "instructions": "A library to get the coordinates of a given location.",
                 "code_example": """
@@ -79,9 +69,10 @@ def run_code_agent():
             }
         ]
 
+
         code_agent = CodeAgent(
             chat_history=chat_history,
-            import_libraries=import_libraries
+            tools=tools,
         )
 
         final_answer = code_agent.run_agent()
@@ -92,6 +83,17 @@ def run_code_agent():
         logging.error(traceback.format_exc())
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
+
+@app.route('/hybrid-vector-graph-rag-ingest-corpus', methods=['POST'])
+def hybrid_vector_graph_rag_ingest_corpus():
+    try:
+        ingest_corpus()
+        return jsonify({"message": "Script executed successfully"}), 200
+    except Exception as e:
+        logging.error("Exception occurred in /hybrid-vector-graph-rag-ingest-corpus: %s", str(e))
+        logging.error(traceback.format_exc())
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+    
 
 if __name__ == '__main__':
     app.run(

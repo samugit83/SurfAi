@@ -1,6 +1,10 @@
+import copy
+import re
+import os
 
 DEFAULT_TOOLS = [
             {
+                "tool_name": "helper_model",
                 "lib_names": ["models"],
                 "instructions": "An LLM usefull to elaborate any output from previous steps. Don't create loops, just use the LLM to elaborate the output for just one step.",
                 "use_exaclty_code_example": True,
@@ -16,7 +20,7 @@ DEFAULT_TOOLS = [
                         prompt = f"<here you describe how to elaborate the previous output>: <previous_output.message>"
                         llm_response = call_model(
                             chat_history=[{"role": "user", "content": prompt}],
-                            model="gpt-4o"
+                            model="{TOOL_HELPER_MODEL}"
                         )
                         return {"elaborated_output": llm_response}
                     except Exception as e:
@@ -24,32 +28,26 @@ DEFAULT_TOOLS = [
                         return {"elaborated_output": ""}
                 """
             },
-            {
-                "lib_names": ["rag"],
-                "instructions": """This is a simple RAG ingestion tool. Ingest the text into the vector database. Activate this tool when the client explicitly requests to save the text in a database. 
-                IMPORTANT GUIDELINES:
-                - The user can specify a collection_name, but it is optional. Don't create any collection_name in previous_output if it is not specified by the user.
-                - Don't elaborate on the information from the user, save it exactly as you receive it.
-                  - collection_name must always be "general", NEVER give other values.
-                """,
+            { 
+                "tool_name": "ingest_simple_rag",
+                "lib_names": ["rag.simple_rag"],
+                "instructions": """This is a simple RAG ingestion tool. Ingest the text into the vector database.""",
               
                 "use_exaclty_code_example": True,
                 "code_example": """
-                    def ingest_rag_db(previous_output, collection_name="general"):
+                    def ingest_rag_db(previous_output):
                         # Ingest texts into the database
-                        # IMPORTANT: don't create any collection_name in previous_output if it is not specified by the user.
                         '''
                         previous_output input types:
-                            "collection_name": Optional[string],
                             "text": string
                         return types:
                             "ingest_result": string
                         '''
-                        from rag.ingest import ingest_texts
+                        from rag.simple_rag.ingest import ingest_texts
 
                         text = previous_output.get("text", "")
 
-                        ingest_result = ingest_texts([text], collection_name=collection_name)
+                        ingest_result = ingest_texts([text], model="{SIMPLE_RAG_EMBEDDING_MODEL}")
                         ingest_result_string = str(ingest_result)
                         return {"ingest_result": ingest_result_string}
                     except Exception as e:
@@ -58,33 +56,85 @@ DEFAULT_TOOLS = [
                 """
             },
             {
-                "lib_names": ["rag"],
-                "instructions": """This is a simple RAG extraction tool. Extract only the information and provide a straightforward response with the acquired information. Do not create additional tools unless necessary. Retrieve the text from the vector database. Activate this tool when the client explicitly requests to retrieve the text from a database. 
-                The user can specify a collection_name, but it is optional. IMPORTANT: do not create any collection_name in previous_output if it is not specified by the user.""",
+                "tool_name": "retrieve_simple_rag",
+                "lib_names": ["rag.simple_rag"],
+                "instructions": """This is a simple RAG extraction tool. Extract only the information and provide a straightforward response with the acquired information. Do not create additional tools unless necessary. Retrieve the text from the vector database. Activate this tool when the client explicitly requests to retrieve the text from a database.""",
                 "use_exaclty_code_example": True,
                 "code_example": """
-                    def retrieve_rag_db(previous_output, collection_name="general"):
-                        # Retrieve texts from the database
-                        # IMPORTANT: don't create any collection_name in previous_output if it is not specified by the user.
+                    def retrieve_rag_db(previous_output):
+                        # Function to retrieve content from the vector db
                         '''
                         previous_output input types:
                             "query": string
                         return types:
                             "retrieve_result": string
                         '''
-
-                        from rag.retrieve import retrieve_documents
-                        query = previous_output.get("query", "")
-                        retrieve_result = retrieve_documents(query, collection_name=collection_name)
-                        retrieve_result_string = str(retrieve_result)
-                        return {"retrieve_result": retrieve_result_string}
-
-                    except Exception as e:
-                        logger.error(f"Error extracting documents: {e}")
-                        return {"retrieve_result": ""}
+                        try:
+                            from rag.simple_rag.retrieve import retrieve_documents
+                            query = previous_output.get("query", "")
+                            retrieve_result = retrieve_documents(query, model="{SIMPLE_RAG_EMBEDDING_MODEL}")
+                            retrieve_result_string = str(retrieve_result)
+                            return {"retrieve_result": retrieve_result_string}
+                        except Exception as e:
+                            logger.error(f"Error extracting documents: {e}")
+                            return {"retrieve_result": ""}
                 """
             },
             {
+                "tool_name": "ingest_hybrid_vector_graph_rag", 
+                "lib_names": ["rag.hybrid_vector_graph_rag"],
+                "instructions": """This is an Hybrid Vector Graph RAG ingestion tool. Ingest the text into the vector and graph database.""",
+                "use_exaclty_code_example": True,
+                "code_example": """
+                    def ingest_hybrid_vector_graph_rag_db(previous_output):
+                        # Ingest texts into the vector and graph database
+                        '''
+                        previous_output input types:
+                            "text": string
+                        return types:
+                            "ingest_result": string
+                        '''
+                        from rag.hybrid_vector_graph_rag.engine import HybridVectorGraphRag
+
+                        try:
+                            engine = HybridVectorGraphRag()
+                            text = previous_output.get("text", "")
+                            ingest_result = engine.ingest([text])
+                            return {"ingest_result": ingest_result} 
+                        except Exception as e:
+                            logger.error(f"Error ingesting texts: {e}")
+                            return {"ingest_result": ""}
+                """
+            },
+            {
+                "tool_name": "retrieve_hybrid_vector_graph_rag",
+                "lib_names": ["rag.hybrid_vector_graph_rag"],
+                "instructions": """This is an Hybrid Vector Graph RAG extraction tool. Extract only the information and provide a straightforward response with the acquired information. 
+                Do not create additional tools unless necessary. Retrieve the text from the vector database. Activate this tool when the client explicitly requests to retrieve the text from a database.""",
+                "use_exaclty_code_example": True,
+                "code_example": """
+                    def retrieve_hybrid_vector_graph_rag_db(previous_output):
+                        # function to retrieve content from the vector and graphg db
+                        '''
+                        previous_output input types:
+                            "query": string
+                        return types:
+                            "retrieve_result": string
+                        '''
+                        from rag.hybrid_vector_graph_rag.engine import HybridVectorGraphRag
+
+                        try:
+                            engine = HybridVectorGraphRag()
+                            question = previous_output.get("query", "")
+                            result = engine.retrieve(question)
+                            return {"retrieve_result": result}
+                        except Exception as e:
+                            logger.error(f"Error extracting documents: {e}")
+                            return {"retrieve_result": ""}
+                """
+            },
+            { 
+                "tool_name": "search_web",
                 "lib_names": ["duckduckgo_search", "beautifulsoup4",  "requests"],
                 "instructions": "A library to scrape the web. Never use the regex or other specific method to extract the data, always output the whole page. The data must be extracted or summarized from the page with models lib.",
                 "use_exaclty_code_example": True,
@@ -152,6 +202,7 @@ DEFAULT_TOOLS = [
                 """
             },
             {
+            "tool_name": "send_email",
             "lib_names": ["smtplib", "email"],
             "instructions": "Send an email to the user with the given email, subject and html content.",
             "use_exaclty_code_example": True,
@@ -206,3 +257,48 @@ DEFAULT_TOOLS = [
 
                 """
         }]
+
+
+
+def generate_default_tools(tools=DEFAULT_TOOLS):
+    """
+    Applies dynamic variables to any string fields within the tools that contain matching placeholders.
+
+    Args:
+        tools (list): The list of tool dictionaries.
+        variables (dict): A dictionary of variables to replace in the tool configurations.
+
+    Returns:
+        list: A new list of tools with variables applied.
+    """
+    updated_tools = copy.deepcopy(tools)
+    placeholder_pattern = re.compile(r"\{(\w+)\}")  # Matches {VAR_NAME}
+
+    variables = {
+        "TOOL_HELPER_MODEL": os.getenv("TOOL_HELPER_MODEL"),
+        "JSON_PLAN_MODEL": os.getenv("JSON_PLAN_MODEL"),
+        "EVALUATION_MODEL": os.getenv("EVALUATION_MODEL"),
+        "SIMPLE_RAG_EMBEDDING_MODEL": os.getenv("SIMPLE_RAG_EMBEDDING_MODEL")
+    }
+
+    for tool in updated_tools:
+        for key, value in tool.items():
+            if isinstance(value, str):
+                matches = placeholder_pattern.findall(value)
+                for match in matches:
+                    if match in variables:
+                        placeholder = f"{{{match}}}"
+                        value = value.replace(placeholder, variables[match])
+                tool[key] = value
+            elif isinstance(value, list):
+                new_list = []
+                for item in value:
+                    if isinstance(item, str):
+                        matches = placeholder_pattern.findall(item)
+                        for match in matches:
+                            if match in variables:
+                                placeholder = f"{{{match}}}"
+                                item = item.replace(placeholder, variables[match])
+                    new_list.append(item)
+                tool[key] = new_list
+    return updated_tools
