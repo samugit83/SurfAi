@@ -116,7 +116,8 @@ Sanitizes outputs from AI model responses to ensure robust JSON parsing and prev
 1) **ONLY LIBRARY NAME**: specifying only the name of the Python library:
 Ensure the library is listed in requirements.txt
 ```python
-    {   "tool_name": "numpy",
+    {   
+        "tool_name": "numpy",
         "lib_name":["numpy"]
     }
 ```
@@ -124,7 +125,8 @@ Ensure the library is listed in requirements.txt
 2) **LIBRARY NAME + INSTRUCTIONS + CODE EXAMPLE**: specifying a python library, providing a description, and a non-strict code example:
 Ensure the library is listed in requirements.txt
 ```python
-    {   "lib_name": ["geopy"],
+    {   
+        "lib_name": ["geopy"],
         "lib_name": ["geopy"],
         "instructions": "A library to get the coordinates of a given location.",
         "code_example": """
