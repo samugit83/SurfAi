@@ -7,7 +7,7 @@ SurfAi is an intelligent and lightweight web automation engine that leverages AI
 ## Video Demo 
 Discover the capabilities of SurfAi:
 [Task: Post on Linkedin](https://youtu.be/n2jnfNpV6BQ).
-[TAsk: Job application on LinkedIn](https://youtu.be/T3Ej4-eeDag).
+[Task: Job application on LinkedIn](https://youtu.be/T3Ej4-eeDag).
 [Task: Add a new work experience on LinkedIn](https://youtu.be/hR73ftZ4t_4).
 
 ## Features ✨
@@ -59,6 +59,11 @@ docker logs -f surf_ai
 6. Access the AI Agent chat interface:
 ```bash
 http://localhost:5000
+``` 
+
+7. Access the automated navigation in the browser:
+```bash
+http://localhost:6901/vnc.html
 ```
 
 - if you want to rebuild and restart the application:
@@ -80,11 +85,6 @@ SURF_AI_JSON_TASK_MODEL=gpt-4o
 ```
 
  
-## Usage 🚀
-
-To open the chat and send commands, go to http://localhost:5000/   
-To view the automated navigation in the browser, go to http://localhost:6901/vnc.html
-
 
 
 ## Contribution Guidelines
