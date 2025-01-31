@@ -405,8 +405,6 @@ class SurfAiEngine:
             self.logger.debug(f"Failed to remove highlights: {str(e)}")
 
                 
-
-
     def take_screenshot(self, page, task_name):
         from datetime import datetime
         current_time = datetime.now().strftime("%H-%M-%S")
@@ -416,8 +414,6 @@ class SurfAiEngine:
         
         with open(screenshot_path, "rb") as image_file:
             self.screenshot_base64 = base64.b64encode(image_file.read()).decode('utf-8')
-
-
 
     def is_critical_error(self, error) -> bool:
         """Determine if error should abort the entire process"""

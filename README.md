@@ -6,9 +6,9 @@ SurfAi is an intelligent and lightweight web automation engine that leverages AI
 
 ## Video Demo 
 Discover the capabilities of SurfAi:
-[Automate a Linkedin Post with Credentials](https://youtu.be/2-vUuPIWJ30).
-[Automate a job application on LinkedIn](https://youtu.be/T3Ej4-eeDag).
-[Automate the addition of a new work experience on LinkedIn](https://youtu.be/2-vUuPIWJ30).
+[Task: Post on Linkedin](https://youtu.be/n2jnfNpV6BQ).
+[TAsk: Job application on LinkedIn](https://youtu.be/T3Ej4-eeDag).
+[Task: Add a new work experience on LinkedIn](https://youtu.be/hR73ftZ4t_4).
 
 ## Features ✨
 
@@ -86,3 +86,26 @@ To open the chat and send commands, go to http://localhost:5000/
 To view the automated navigation in the browser, go to http://localhost:6901/vnc.html
 
 
+
+## Contribution Guidelines
+
+We welcome contributions from the community! If you'd like to contribute, please follow these guidelines:
+
+### How to Contribute
+1. **Fork the Repository** – Click the "Fork" button at the top right of this page and clone the forked repository to your local machine.
+2. **Create a Branch** – Use a descriptive branch name related to the feature or fix (e.g., `feature-new-component` or `fix-bug-123`).
+3. **Make Your Changes** – Implement your feature, bug fix, or improvements, ensuring the code follows the project's coding style.
+4. **Test Your Changes** – Run all tests to ensure that nothing is broken.
+5. **Commit Your Changes** – Use clear and concise commit messages (e.g., `fix: resolve issue with user authentication`).
+6. **Push to GitHub** – Push your branch to your forked repository.
+7. **Submit a Pull Request (PR)** – Open a PR against the `main` or `develop` branch with a clear description of your changes.
+
+### Contribution Guidelines
+- Follow the coding standards and style used in the project.
+- Keep PRs focused and small for easier review.
+- Ensure new features or fixes are well-tested.
+- Provide clear documentation if introducing a new feature.
+
+By contributing, you agree that your changes will be licensed under the same license as the project.
+
+Thank you for helping improve this project! 🚀
