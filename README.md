@@ -6,9 +6,9 @@ SurfAi is an intelligent and lightweight web automation engine that leverages AI
 
 ## Video Demo 
 Discover the capabilities of SurfAi:
-[Automate a Linkedin Post with Credentials](https://youtu.be/T3Ej4-eeDag).
+[Automate a Linkedin Post with Credentials](https://youtu.be/2-vUuPIWJ30).
 [Automate a job application on LinkedIn](https://youtu.be/T3Ej4-eeDag).
-[Automate the addition of a new work experience on LinkedIn](https://youtu.be/T3Ej4-eeDag).
+[Automate the addition of a new work experience on LinkedIn](https://youtu.be/2-vUuPIWJ30).
 
 ## Features ✨
 

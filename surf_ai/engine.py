@@ -410,7 +410,7 @@ class SurfAiEngine:
     def take_screenshot(self, page, task_name):
         from datetime import datetime
         current_time = datetime.now().strftime("%H-%M-%S")
-        screenshot_path = f"./tools/surf_ai/screenshots/{current_time}_{task_name}.png"
+        screenshot_path = f"./surf_ai/screenshots/{current_time}_{task_name}.png"
         page.screenshot(path=screenshot_path, full_page=False)
         self.screenshot_url = screenshot_path
         
