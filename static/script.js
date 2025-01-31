@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.value = '';
 
         try {
-            const response = await fetch('/run-code-agent', {
+            const response = await fetch('/surf-ai', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
