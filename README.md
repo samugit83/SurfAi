@@ -9,6 +9,7 @@ Discover the capabilities of SurfAi:
 [Task: Post on Linkedin](https://youtu.be/n2jnfNpV6BQ).
 [Task: Job application on LinkedIn](https://youtu.be/T3Ej4-eeDag).
 [Task: Add a new work experience on LinkedIn](https://youtu.be/hR73ftZ4t_4).
+[Task: Search for an available hotel on Booking.com and get info](https://youtu.be/o5Gn-XVv_h8).
 
 ## Features ✨
 
