@@ -4,7 +4,34 @@ class ElementHighlighter:
 
     def apply_highlight(self, page):
         try:
-            page.wait_for_function('''() => document.readyState === 'complete' ''', timeout=5000)
+            page.wait_for_load_state("networkidle", timeout=5000)
+            
+            # Wait until the DOM stops changing (i.e. no mutations for 2 seconds).
+            page.evaluate("""
+                async () => {
+                    await new Promise(resolve => {
+                        let timeout = null;
+                        const observer = new MutationObserver(() => {
+                            if (timeout) clearTimeout(timeout);
+                            // Reset the timer on every mutation.
+                            timeout = setTimeout(() => {
+                                observer.disconnect();
+                                resolve();
+                            }, 2000);  // 2-second quiet period
+                        });
+                        observer.observe(document.body, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true
+                        });
+                        // In case there are no mutations at all, resolve after 2 seconds.
+                        timeout = setTimeout(() => {
+                            observer.disconnect();
+                            resolve();
+                        }, 2000);
+                    });
+                }
+            """)
             page.evaluate(self._highlight_script())
         except Exception as e:
             self.logger.debug(f"Highlight failed: {str(e)}")
@@ -13,46 +40,50 @@ class ElementHighlighter:
         try:
             page.evaluate(self._remove_highlight_script())
         except Exception as e:
-            self.logger.debug(f"Remove highlight failed: {str(e)}")
+            self.logger.debug(f"Remove highlight failed: {str(e)}") 
+
+
 
     def _highlight_script(self):
+        # This script finds interactive elements and overlays them with a border and label.
+        # For void elements (which cannot have children), a wrapper is inserted.
         return """
+            (function() {
                 let counter = 1;
                 const getRandomColor = () => {
                     const hue = Math.floor(Math.random() * 360);
-                    const saturation = 70 + Math.floor(Math.random() * 20); 
-                    const lightness = 30 + Math.floor(Math.random() * 10);  
+                    const saturation = 70 + Math.floor(Math.random() * 20);
+                    const lightness = 30 + Math.floor(Math.random() * 10);
                     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
                 };
 
-                interactiveSelectors = [
+                const interactiveSelectors = [ 
                     'input', 'textarea', 'button', 'select', 'output',
                     'a[href]', 'area[href]',
-                    '[contenteditable]', 
+                    '[contenteditable]',
                     '[tabindex]:not([tabindex="-1"])',
                     '[onclick]', '[ondblclick]', '[onchange]', '[onsubmit]', '[onkeydown]',
                     'audio[controls]', 'video[controls]',
                     'details', 'details > summary',
                     '[role="button"]', '[role="checkbox"]', '[role="radio"]',
                     '[role="link"]', '[role="textbox"]', '[role="searchbox"]',
-                    '[role="combobox"]', '[role="listbox"]', '[role="menu"]',
+                    '[role="combobox"]', '[role="listbox"]', '[role="menu"]', 
                     '[role="menuitem"]', '[role="slider"]', '[role="switch"]',
                     '[role="tab"]', '[role="treeitem"]', '[role="gridcell"]',
                     '[role="option"]', '[role="spinbutton"]', '[role="scrollbar"]',
-                    'iframe', 'object', 'embed'
-                ]
-                const voidElements = ['input', 'img', 'br', 'hr', 'area', 'base', 'col', 'select', 'textarea',
-                                    'embed', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
-                
-                // Clear previous body labels
-                if (window.surfAiLabels) {
-                    window.surfAiLabels.forEach(label => label.remove()); 
-                    window.surfAiLabels = [];
-                }
-                
+                    'iframe', 'object', 'embed' 
+                ];
+
+                // List of HTML void elements (self-closing)
+                const voidElements = [
+                    'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
+                    'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'
+                ];
+
+                // Select only visible, interactive elements that haven't been highlighted yet.
                 const elements = Array.from(document.querySelectorAll('*')).filter(el => {
                     const style = window.getComputedStyle(el);
-                    return style.display !== 'none' && 
+                    return style.display !== 'none' &&
                         style.visibility === 'visible' &&
                         el.offsetParent !== null &&
                         interactiveSelectors.some(selector => el.matches(selector)) &&
@@ -60,115 +91,86 @@ class ElementHighlighter:
                 });
 
                 elements.forEach(el => {
-                    el.style.overflow = 'visible';
+                    let container = el;
+                    // If the element is a void element, wrap it in a container.
+                    if (voidElements.includes(el.tagName.toLowerCase())) {
+                        const wrapper = document.createElement('span');
+                        // Use inline-block to mimic the original element's display, if needed.
+                        wrapper.style.display = 'inline-block';
+                        wrapper.style.position = 'relative';
+                        // Insert the wrapper before the element and then move the element into it.
+                        el.parentNode.insertBefore(wrapper, el);
+                        wrapper.appendChild(el);
+                        container = wrapper;
+                    }
+
                     const number = counter++;
-                    const tagName = el.tagName.toLowerCase(); 
-
-                    el.dataset.originalBorder = el.style.border || '';
-                    el.dataset.originalBoxSizing = el.style.boxSizing || '';
-                    el.dataset.originalPosition = el.style.position || '';
-                    
-                    el.dataset.highlightNumber = number; 
                     const color = getRandomColor();
-                    el.style.border = `2px solid ${color}`; 
-                    el.style.boxSizing = 'border-box';
-                    el.style.position = 'relative';
+                    // Mark the original element (or its container) as highlighted.
+                    el.dataset.highlightNumber = number;
 
-                    const label = document.createElement('span'); 
+                    // Ensure the container has positioning so that an absolutely positioned child will be relative.
+                    const containerStyle = window.getComputedStyle(container);
+                    if (containerStyle.position === 'static') {
+                        container.style.position = 'relative';
+                    }
+
+                    // Create an overlay that fills the container.
+                    const overlay = document.createElement('div');
+                    overlay.className = 'surf-ai-highlight-overlay';
+                    overlay.dataset.highlightNumber = number;
+                    overlay.style.position = 'absolute';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100%';
+                    overlay.style.height = '100%';
+                    overlay.style.border = '2px solid ' + color;
+                    overlay.style.boxSizing = 'border-box';
+                    overlay.style.pointerEvents = 'none'; // so the overlay doesn't block interactions
+
+                    // Set the overlay's z-index to be 5 more than the container's.
+                    let currentZ = parseInt(containerStyle.zIndex, 10);
+                    if (isNaN(currentZ)) {
+                        currentZ = 0;
+                    }
+                    overlay.style.zIndex = currentZ + 5;
+ 
+                    // Create and style the label.
+                    const label = document.createElement('span');
                     label.className = 'surf-ai-highlight-label';
                     label.textContent = number;
+                    label.style.position = 'absolute';
+                    label.style.top = '0px';
+                    label.style.left = '0px';
                     label.style.backgroundColor = color;
                     label.style.fontFamily = 'Arial';
-                    label.style.mixBlendMode = 'normal';
-                    label.style.pointerEvents = 'none';
                     label.style.color = 'white';
-                    label.style.padding = '0 4px';
-                    label.style.height = '21px';
-                    label.style.display = 'flex'; 
+                    label.style.height = '15px';
+                    label.style.display = 'flex';
                     label.style.alignItems = 'center';
                     label.style.justifyContent = 'center';
-                    label.style.fontSize = '17px';
-                    label.style.fontWeight = 'bold'; 
+                    label.style.fontSize = '13px';
+                    label.style.fontWeight = 'bold';
                     label.style.borderRadius = '2px';
-                    label.style.zIndex = '99999';
 
-                    if (voidElements.includes(tagName)) {
-                        const rect = el.getBoundingClientRect();
-                        const scrollX = window.pageXOffset;
-                        const scrollY = window.pageYOffset;
-                        
-                        // Find the first positioned ancestor
-                        let parent = el.parentElement;
-                        let positionedParent = null;
-                        while (parent) {
-                            const style = getComputedStyle(parent);
-                            if (style.position !== 'static') {
-                                positionedParent = parent;  
-                                break; 
-                            }
-                            parent = parent.parentElement;
-                        }
 
-                        if (positionedParent) { 
-                            const parentRect = positionedParent.getBoundingClientRect();
-                            label.style.position = 'absolute';
-                            label.style.top = `${rect.top - parentRect.top + scrollY}px`;
-                            label.style.left = `${rect.left - parentRect.left + scrollX}px`;
-                            positionedParent.appendChild(label);
-                        } else {
-                            label.style.position = 'absolute';
-                            label.style.top = `${rect.top + scrollY}px`;
-                            label.style.left = `${rect.left + scrollX}px`;
-                            document.body.appendChild(label);
-                        }
-
-                        const labelRect = label.getBoundingClientRect();
-                        if (labelRect.right > window.innerWidth) {
-                            label.style.left = `${rect.left + scrollX}px`;
-                        }
-                        if (labelRect.bottom > window.innerHeight) {
-                            label.style.top = `${rect.top + scrollY - labelRect.height}px`;
-                        }
-
-                        if (labelRect.left < 0) {
-                            label.style.left = `${scrollX}px`;
-                        }
-
-                        if (!window.surfAiLabels) window.surfAiLabels = [];
-                        window.surfAiLabels.push(label);
-
-                    } else {
-                        // Position relative to parent element 
-                        label.style.position = 'absolute'; 
-                        label.style.top = '0px';
-                        label.style.left = '0px';
-                        el.appendChild(label);
-                    }
+                    overlay.appendChild(label);
+                    // Append the overlay as a child of the container (either the original element or its wrapper).
+                    container.appendChild(overlay);
                 });
-            """
+            })();
+        """
     
     def _remove_highlight_script(self):
         return """
-
-                if (window.surfAiLabels) {
-                    window.surfAiLabels.forEach(label => label.remove());
-                    window.surfAiLabels = [];
-                }
-                
-                const elements = Array.from(document.querySelectorAll('*[data-highlight-number]'));
-                elements.forEach(el => {
-                    const labels = el.getElementsByClassName('surf-ai-highlight-label');
-                    while(labels.length > 0) {
-                        labels[0].remove();
-                    } 
-                    
-                    el.style.border = el.dataset.originalBorder || '';
-                    el.style.boxSizing = el.dataset.originalBoxSizing || '';
-                    el.style.position = el.dataset.originalPosition || '';  
-
-                    delete el.dataset.highlightNumber;
-                    delete el.dataset.originalBorder;
-                    delete el.dataset.originalBoxSizing;
-                    delete el.dataset.originalPosition;
+            (function() {
+                // Remove all highlight overlays.
+                document.querySelectorAll('.surf-ai-highlight-overlay').forEach(overlay => {
+                    overlay.parentNode.removeChild(overlay);
                 });
-            """
+                // Remove the data-highlight-number attribute from elements. 
+                document.querySelectorAll('[data-highlight-number]').forEach(el => {
+                    delete el.dataset.highlightNumber;
+                });
+            })();
+        """  

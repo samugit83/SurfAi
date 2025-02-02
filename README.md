@@ -1,6 +1,6 @@
 # SurfAi 🌐🤖
 
-**AI-Powered Web Automation Agent**
+**AI-Powered Web Automation Agent** - Version 1.1.0
 
 SurfAi is an intelligent and lightweight web automation engine that leverages AI to interpret natural language instructions and automate web interactions using Playwright. It combines LLM capabilities with browser automation for complex task execution.
 
@@ -18,6 +18,8 @@ Discover the capabilities of SurfAi:
 - **Multi-Strategy Execution**: Automatic fallback commands for reliable task completion
 - **Context-Aware Scraping**: Real-time page analysis with intelligent content truncation
 - **Comprehensive Logging**: Detailed execution tracking with memory buffering
+- **Data Extraction**: Extract data from the page and store it in the tasks to provide a final answer
+- **Multi-Tab Navigation**: Navigate on multiple tabs and switch between them
 
 
 ## Installation 🛠️
@@ -55,9 +57,9 @@ docker-compose up -d
 ```bash
 docker logs -f surf_ai
 ```
-
+  
 6. Access the AI Agent chat interface:
-```bash
+```bash 
 http://localhost:5000
 ``` 
 
@@ -79,7 +81,7 @@ docker logs -f surf_ai
 Create a file named .env in the root folder and insert all the following variables to ensure the application functions correctly:
 
 ```bash
-OPENAI_API_KEY=open_ai_api_key
+OPENAI_API_KEY=open_ai_api_key 
 FLASK_PORT=5000
 SURF_AI_JSON_TASK_MODEL=gpt-4o 
 ```

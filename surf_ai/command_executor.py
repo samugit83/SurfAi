@@ -10,9 +10,10 @@ class CommandExecutor:
         for attempt in range(self.max_retries + 1):
             try:
                 exec(command, {'page': page, 'self': self})    
+                self.logger.debug(f"🟢 task_name: '{task_name}', Command '{command}' executed successfully") 
                 return True
             except PlaywrightTimeoutError as e:
-                self._handle_error(e, task_name, command, "⏰ Timeout", attempt)
+                self._handle_error(e, task_name, command, "⏰ Timeout", attempt)  
             except PlaywrightError as e:
                 self._handle_error(e, task_name, command, "🎭 Playwright")
             except Exception as e:
@@ -23,4 +24,4 @@ class CommandExecutor:
         error_msg = f"{error_type} error in task '{task_name}': {command}\nError: {str(error)}"
         if attempt and attempt == self.max_retries:
             error_msg += "\nMax retries reached."
-        self.logger.debug(error_msg)
+        self.logger.debug(error_msg) 

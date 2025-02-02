@@ -5,7 +5,7 @@ import logging
 import traceback
 from surf_ai.engine import SurfAiEngine 
 
-logging.basicConfig(
+logging.basicConfig( 
     level=logging.DEBUG,  # Change to DEBUG for more verbosity
     format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s'
 )
@@ -25,7 +25,7 @@ def surf_ai():
         prompt = chat_history[-1]['content']
         surf_ai_engine = SurfAiEngine() 
         result = surf_ai_engine.go_surf(prompt)
-        return jsonify({"message": result}), 200
+        return jsonify({"assistant": result}), 200
     except Exception as e:
         logging.error("Exception occurred in /surf-ai: %s", str(e))
         logging.error(traceback.format_exc())

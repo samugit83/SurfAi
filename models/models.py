@@ -28,7 +28,8 @@ def call_model(
     image_url: Optional[str] = None,
     image_base64: Optional[str] = None,
     image_extension: Optional[str] = None,
-    model: str = "gpt-4o"
+    model: str = "gpt-4o",
+    output_format: Optional[str] = "json_object"
 ) -> str:
     """
     Calls the OpenAI model with chat history and optionally an image URL.
@@ -81,19 +82,29 @@ def call_model(
                 "content": content_list
             })
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=chat_history,
-            temperature=0.0
-        )
+        if output_format:
+            response = client.chat.completions.create( 
+                model=model,
+                messages=chat_history, 
+                temperature=0.0,
+                response_format={"type": output_format}
+            )
+        else:
+            response = client.chat.completions.create( 
+                model=model,
+                messages=chat_history, 
+                temperature=0.0
+            )
 
-        answer = response.choices[0].message.content.strip()
+        answer = response.choices[0].message.content.strip() 
         return answer
 
     except Exception as e:
         logger.error(f"OpenAI API error: {str(e)}")
         logger.error(traceback.format_exc())
         raise e
+    
+
 
 def create_embeddings(texts_to_embed: List[str], model: str = "text-embedding-ada-002") -> List[List[float]]: 
     client = OpenAI(api_key=OPENAI_API_KEY)
