@@ -32,6 +32,6 @@ class JsonResponseHandler:
             
             original_json['tasks'] = existing_tasks
             for key in new_json:
-                if key not in ['tasks', 'updated_tasks_and_new_task']:
+                if key not in ['tasks', 'updated_tasks']:
                     original_json[key] = new_json[key]
         return original_json
