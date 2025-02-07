@@ -87,10 +87,14 @@ FLASK_PORT=5000
 SURF_AI_JSON_TASK_MODEL=gpt-4o 
 ```
 
- 
+8. Some prompt example:
+- Go to Amazon and search for an iPhone 13 smartphone. Navigate to the page of the first result and tell me the vendor name in the buy box, the selling price, and if it offers Prime.
+- Go to https://www.linkedin.com/feed, log in with email: 'mymail' and password: 'mypassword'. Comment on the first 2 posts with intelligent and contextually relevant comments based on the text and image of the post, with a minimum of 40 words.
+- Visit 4 different electronics e-commerce websites to obtain the average price of the top 3 search results for the query: iPhone 13 Pro. The websites are: https://www.bestbuy.com/, https://www.croma.com/, https://www.mediaworld.it/, https://www.boulanger.com/. Then, provide me with a comparison report of the prices found. If you find a currency other than the euro, search on Google for the latest exchange rate and convert it.
 
 
-## Contribution Guidelines
+
+## Contribution Guidelines 
 
 We welcome contributions from the community! If you'd like to contribute, please follow these guidelines:
 

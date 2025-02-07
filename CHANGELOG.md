@@ -13,3 +13,9 @@ All notable changes to this project will be documented in this file.
 - Improved main loop prompt in the Multi-Alternative Command Protocol section
 - Enhanced the styling of the element highlighter for better Model visibility
 
+## [1.1.1] - 2025-02-07
+### Added
+- Improved prompts for interaction with specific elements
+- Enhanced multi-site data extraction for final report creation
+- Improved error handling
+- Improved highlighter application
