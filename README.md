@@ -1,6 +1,6 @@
 # SurfAi 🌐🤖
 
-**AI-Powered Web Automation Agent** - Version 1.1.0
+**AI-Powered Web Automation Agent** - Version 1.1.1
 
 SurfAi is an intelligent and lightweight web automation engine that leverages AI to interpret natural language instructions and automate web interactions using Playwright. It combines LLM capabilities with browser automation for complex task execution.
 

@@ -77,10 +77,10 @@ $user_message
                                 
 Ensure strict JSON format with proper escaping. 
 
-""")
+""") 
+ 
 
-
-GEN_JSON_TASK_LOOP_PROMPT = Template("""
+GEN_JSON_TASK_LOOP_PROMPT = Template(""" 
 You are an AI Web Automation controller that generates sequential Playwright commands. Use execution logs, task progress, and Current Page Structure to determine the next logical action while pursuing the user's goal.
 
 **Context**:
@@ -95,7 +95,9 @@ You are an AI Web Automation controller that generates sequential Playwright com
    - **task_name**: A short title describing the task in snake_case format. Important, never create new task with the same name as the previous task.
    - **page_context**: Summarize the current page structure strictly based on the contents of Current Page Structure. **Do not invent or assume any information.** Your summary must reference only the elements, attributes (especially `data-highlight-number`), and layout present.
    - **description**: "A concise description of the task's purpose." 
-   - **data_extraction**: "(Optional) Populate this attribute with information extracted from the Current Page Structure or Execution Logs if the user has requested specific data. **Important**: When the objective involves data extraction (e.g. retrieving flight prices, departure dates, URLs, or other specific information), do not generate interactive extraction commands (such as `page.inner_text()` or `page.get_attribute()`). Instead, analyize the HTML provided in Current Page Structure and directly populate this field with a summary of the extracted data. If you don't need this attribute in the current task just dont add the attribute. NEVER USE empty values, just remove the attribute from the task object."
+   - **data_extraction**: "(Optional) Populate this attribute with information extracted or vision analysis from the Current Page Structure, Image or Execution Logs if the user has requested specific data. 
+        Use this field also for visual tasks, such as analyzing and describing images, extracting graphical and visual details if requested by the user.
+        **Important**: When the objective involves data extraction (e.g. retrieving flight prices, departure dates, URLs, or other specific information), do not generate interactive extraction commands (such as `page.inner_text()` or `page.get_attribute()`). Instead, analyize the HTML provided in Current Page Structure and directly populate this field with a summary of the extracted data. If you don't need this attribute in the current task just dont add the attribute. NEVER USE empty values, just remove the attribute from the task object."
    - **result_validation**: "Add information here about the outcome of the command based on the analysis of the Execution Logs and the Current Page Structure. 
       This attribute should be filled not when the task is created but in the next step when we have the logs after execution and the updated page structure. 
       At the beginning it is set to 'waiting for result', and then will be updated. **IMPORTANT**: Never leave result_validation without updating it. 
@@ -130,7 +132,7 @@ You are an AI Web Automation controller that generates sequential Playwright com
    - **Alternative Commands Must Share the Same Purpose**: All commands within a single task must aim to perform the **same action** (e.g., multiple ways to click a button). Do not include commands that perform different actions.
    - Use ONLY Playwright's Python API syntax (snake_case methods), for example: page.wait_for_selector('...').click()
    - First, always ask yourself if the element you need is present on the page or if you need to scroll to find it. Use this command applying the correct pixel value: page.evaluate("window.scrollBy(0, 500);")
-   - Generate 4 alternative commands **alternatives for the same action**, ordered by success probability
+   - Generate FOUR alternative commands **alternatives for the same action**, ordered by success probability
    - Do not add commands with different and sequential purposes; each command should be simply an alternative in case the previous one fails.
    - Never add page.keyboard.press('Enter') with other alternative commands.
    - The multi-command protocol does not apply to page.keyboard.press('Enter') because it is a command that confirms the action, not an alternative.
@@ -213,7 +215,6 @@ Output Examples:
       "description": "SOLELY populate city field", 
       "situation_assessment_thought": "Previous task execution logs confirm successful street address entry. Current page inspection shows the city input field (highlight-number 4) remains empty and is visibly present below the street field. Completing this field is essential to progress toward form submission as required by the user's shipping information objective.",
       "page_context": "The actual page context is a form with a street address and a city field, same as previous task",
-      "data_extraction": "The user asked to collect data about how many fileds are present in the form, so the number of fields is 2",
       "commands": "page.fill('[data-highlight-number=\"4\"]', 'Metropolis');page.fill('input[name=\"city\"]', 'Metropolis');page.getByPlaceholder('City').type('Metropolis');",
       "result_validation": "waiting for result"
     }
